@@ -1,7 +1,6 @@
-const fs = require('fs');
-const path = require('path');
+const { put, list, del } = require('@vercel/blob');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
     try {
         // 设置CORS头
         res.setHeader('Access-Control-Allow-Origin', 'https://www.konoxin.top');
@@ -24,12 +23,19 @@ module.exports = (req, res) => {
             return res.status(400).json({ error: '无效的订阅对象' });
         }
 
-        // 读取现有订阅
-        const subscriptionsPath = path.join(__dirname, '..', 'subscriptions.json');
+        // 获取现有订阅列表
         let subscriptions = [];
-
-        if (fs.existsSync(subscriptionsPath)) {
-            subscriptions = JSON.parse(fs.readFileSync(subscriptionsPath, 'utf8'));
+        try {
+            // 尝试获取现有的订阅文件
+            const { blobs } = await list({ prefix: 'subscriptions/' });
+            if (blobs.length > 0) {
+                // 假设我们使用第一个找到的文件
+                const response = await fetch(blobs[0].url);
+                subscriptions = await response.json();
+            }
+        } catch (error) {
+            console.error('获取订阅列表失败:', error);
+            // 如果失败，使用空数组继续
         }
 
         // 检查是否已存在相同的订阅
@@ -38,12 +44,19 @@ module.exports = (req, res) => {
         if (!exists) {
             // 添加新订阅
             subscriptions.push(subscription);
-            fs.writeFileSync(subscriptionsPath, JSON.stringify(subscriptions));
+
+            // 将更新后的订阅列表保存到Blob
+            const blob = await put('subscriptions/list.json', JSON.stringify(subscriptions), {
+                access: 'private',
+                contentType: 'application/json'
+            });
+
+            console.log('订阅列表已保存到:', blob.url);
         }
 
         res.status(201).json({ success: true });
     } catch (error) {
         console.error('保存订阅失败:', error);
-        res.status(500).json({ error: '保存订阅失败' });
+        res.status(500).json({ error: '保存订阅失败: ' + error.message });
     }
 };
