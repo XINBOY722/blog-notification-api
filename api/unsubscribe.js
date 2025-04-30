@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
+// api/unsubscribe.js
+const { createClient } = require('@vercel/edge-config');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
     try {
         // 设置CORS头
         res.setHeader('Access-Control-Allow-Origin', 'https://www.konoxin.top');
@@ -24,22 +24,22 @@ module.exports = (req, res) => {
             return res.status(400).json({ error: '无效的订阅对象' });
         }
 
-        // 读取现有订阅
-        const subscriptionsPath = path.join(__dirname, '..', 'subscriptions.json');
+        // 创建 Edge Config 客户端
+        const edgeConfig = createClient(process.env.EDGE_CONFIG);
 
-        if (!fs.existsSync(subscriptionsPath)) {
-            return res.status(200).json({ success: true });
-        }
-
-        let subscriptions = JSON.parse(fs.readFileSync(subscriptionsPath, 'utf8'));
+        // 获取现有订阅列表
+        let subscriptions = await edgeConfig.get('subscriptions') || [];
 
         // 移除订阅
         subscriptions = subscriptions.filter(sub => sub.endpoint !== subscription.endpoint);
-        fs.writeFileSync(subscriptionsPath, JSON.stringify(subscriptions));
+
+        // 更新 Edge Config
+        await edgeConfig.set('subscriptions', subscriptions);
+        console.log('订阅已移除，当前订阅数量:', subscriptions.length);
 
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('取消订阅失败:', error);
-        res.status(500).json({ error: '取消订阅失败' });
+        res.status(500).json({ error: '取消订阅失败: ' + error.message });
     }
 };

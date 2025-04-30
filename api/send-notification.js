@@ -1,4 +1,6 @@
+// api/send-notification.js
 const webpush = require('web-push');
+const { createClient } = require('@vercel/edge-config');
 const fs = require('fs');
 const path = require('path');
 
@@ -42,14 +44,11 @@ module.exports = async (req, res) => {
             keys.privateKey
         );
 
-        // 读取订阅列表
-        const subscriptionsPath = path.join(__dirname, '..', 'subscriptions.json');
+        // 创建 Edge Config 客户端
+        const edgeConfig = createClient(process.env.EDGE_CONFIG);
 
-        if (!fs.existsSync(subscriptionsPath)) {
-            return res.status(200).json({ success: true, message: '没有订阅者' });
-        }
-
-        const subscriptions = JSON.parse(fs.readFileSync(subscriptionsPath, 'utf8'));
+        // 获取订阅列表
+        const subscriptions = await edgeConfig.get('subscriptions') || [];
 
         if (subscriptions.length === 0) {
             return res.status(200).json({ success: true, message: '没有订阅者' });
@@ -86,7 +85,8 @@ module.exports = async (req, res) => {
             const updatedSubscriptions = subscriptions.filter(sub =>
                 !failedSubscriptions.some(failedSub => failedSub.endpoint === sub.endpoint)
             );
-            fs.writeFileSync(subscriptionsPath, JSON.stringify(updatedSubscriptions));
+            await edgeConfig.set('subscriptions', updatedSubscriptions);
+            console.log('已移除失效订阅，当前订阅数量:', updatedSubscriptions.length);
         }
 
         res.status(200).json({
@@ -98,6 +98,6 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('发送通知失败:', error);
-        res.status(500).json({ error: '发送通知失败' });
+        res.status(500).json({ error: '发送通知失败: ' + error.message });
     }
 };

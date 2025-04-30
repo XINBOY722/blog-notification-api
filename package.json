@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "@vercel/blob": "^1.0.0",
+        "@vercel/edge-config": "^1.4.0",
         "web-push": "^3.5.0"
     },
     "type": "commonjs"
