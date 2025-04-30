@@ -1,0 +1,13 @@
+{
+    "name": "blog-notification-api",
+    "version": "1.0.0",
+    "description": "API for blog push notifications",
+    "main": "index.js",
+    "scripts": {
+        "generate-keys": "node utils/generate-keys.js"
+    },
+    "dependencies": {
+        "web-push": "^3.5.0"
+    },
+    "type": "commonjs"
+}

@@ -1,0 +1,27 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "api/*.js",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/vapid-public-key",
+            "dest": "/api/vapid-public-key.js"
+        },
+        {
+            "src": "/api/subscribe",
+            "dest": "/api/subscribe.js"
+        },
+        {
+            "src": "/api/unsubscribe",
+            "dest": "/api/unsubscribe.js"
+        },
+        {
+            "src": "/api/send-notification",
+            "dest": "/api/send-notification.js"
+        }
+    ]
+}
