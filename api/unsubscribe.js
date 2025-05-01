@@ -1,17 +1,17 @@
 const { removeSubscription } = require('../lib/redis');
 
 module.exports = async (req, res) => {
+    // 设置CORS头
+    res.setHeader('Access-Control-Allow-Origin', 'https://www.konoxin.top');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // 处理预检请求
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     try {
-        // 设置CORS头
-        res.setHeader('Access-Control-Allow-Origin', 'https://www.konoxin.top');
-        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-        // 处理预检请求
-        if (req.method === 'OPTIONS') {
-            return res.status(200).end();
-        }
-
         if (req.method !== 'POST') {
             return res.status(405).json({ error: '只允许POST请求' });
         }
